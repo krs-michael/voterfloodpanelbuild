@@ -331,6 +331,51 @@ write.csv(nc_xxxx, 'D:/Mike_Data/PolData/csv_files/nc_voters2021.csv')
 write_dta(nc_xxxx_unique, 'D:/Mike_Data/PolData/dta_files/nc_unique_2021.dta')
 rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
 
+# Merging in missing ncid's for 2005 and 2007 ----------------------------------
+
+## Decided to do in stata
+
+# Dropping duplicate ncid's for 2005 and 2007 ----------------------------------
+
+# 2009
+nc_xxxx <- readRDS("nc_voters2005_ncid.RDS")
+nc_unique <- nc_xxxx %>% group_by(ncid) %>% filter(n()==1)
+nc_dup <- nc_xxxx %>% group_by(ncid) %>% filter(n()>1)
+nc_mostrecent <- nc_dup %>%
+  group_by(ncid) %>%
+  filter(registr_dt == max(registr_dt))
+nc_mostrecent2 <- nc_mostrecent %>%
+  group_by(ncid) %>%
+  filter(voter_reg_num == max(voter_reg_num))
+nc_xxxx_unique <- rbind(nc_unique, nc_mostrecent2)
+length(unique(nc_xxxx$ncid))
+length(unique(nc_xxxx_unique$ncid))
+saveRDS(nc_xxxx_unique, file = "D:/Mike_Data/PolData/rda_files/nc_unique_2005.RDS")
+write.csv(nc_xxxx_unique, 'D:/Mike_Data/PolData/csv_files/nc_unique_2005.csv')
+write.csv(nc_xxxx, 'D:/Mike_Data/PolData/csv_files/nc_voters2005.csv')
+write_dta(nc_xxxx_unique, 'D:/Mike_Data/PolData/dta_files/nc_unique_2005.dta')
+rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
+
+# 2007
+nc_xxxx <- readRDS("nc_voters2007_ncid.RDS")
+nc_unique <- nc_xxxx %>% group_by(ncid) %>% filter(n()==1)
+nc_dup <- nc_xxxx %>% group_by(ncid) %>% filter(n()>1)
+nc_mostrecent <- nc_dup %>%
+  group_by(ncid) %>%
+  filter(registr_dt == max(registr_dt))
+nc_mostrecent2 <- nc_mostrecent %>%
+  group_by(ncid) %>%
+  filter(voter_reg_num == max(voter_reg_num))
+nc_xxxx_unique <- rbind(nc_unique, nc_mostrecent2)
+length(unique(nc_xxxx$ncid))
+length(unique(nc_xxxx_unique$ncid))
+saveRDS(nc_xxxx_unique, file = "D:/Mike_Data/PolData/rda_files/nc_unique_2007.RDS")
+write.csv(nc_xxxx_unique, 'D:/Mike_Data/PolData/csv_files/nc_unique_2007.csv')
+write.csv(nc_xxxx, 'D:/Mike_Data/PolData/csv_files/nc_voters2007.csv')
+write_dta(nc_xxxx_unique, 'D:/Mike_Data/PolData/dta_files/nc_unique_2007.dta')
+rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
+
+
 # Matching Property Data to Nearest Point for 2006, 2008-2021 ------------------
 
 
