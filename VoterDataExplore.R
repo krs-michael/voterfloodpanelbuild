@@ -337,7 +337,15 @@ rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
 
 # Dropping duplicate ncid's for 2005 and 2007 ----------------------------------
 
-# 2009
+nc_2005 <- read_dta("D:/Mike_Data/PolData/dta_files/nc_voters2005_ncid.dta")
+saveRDS(nc_2005, "D:/Mike_Data/PolData/rda_files/nc_voters2005_ncid.RDS")
+
+nc_2007 <- read_dta("D:/Mike_Data/PolData/dta_files/nc_voters2007_ncid.dta")
+saveRDS(nc_2007, "D:/Mike_Data/PolData/rda_files/nc_voters2007_ncid.RDS")
+
+setwd("D:/Mike_Data/PolData/rda_files")
+
+# 2005
 nc_xxxx <- readRDS("nc_voters2005_ncid.RDS")
 nc_unique <- nc_xxxx %>% group_by(ncid) %>% filter(n()==1)
 nc_dup <- nc_xxxx %>% group_by(ncid) %>% filter(n()>1)
@@ -376,7 +384,223 @@ write_dta(nc_xxxx_unique, 'D:/Mike_Data/PolData/dta_files/nc_unique_2007.dta')
 rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
 
 
-# Matching Property Data to Nearest Point for 2006, 2008-2021 ------------------
+# Matching Property Data to Nearest Point for 2006 - 2021 ----------------------
+
+library(data.table)
+library(tidyverse)
+library(sf)
+library(s2)
+library(here)
+library(vroom)
+library(arrow)
+library(FNN)
+library(tictoc)
+library(parquetize)
+
+# 2005
+
+getwd()
+setwd("D:/Mike_Data/PolData/")
+
+options(max.print = 50)
+
+parquetize::table_to_parquet(
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2005.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2005/")
+)
+nc_2005 <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2005")
+)
+flood_data <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/FS_NC_Flood")
+)
+tictoc::tic("Calculating nearest index")
+nearest_idx = FNN:::get.knnx(
+  data = flood_data[, c("lat", "v2")],
+  query = nc_2005[, c("y", "x")],
+  k = 1, algorithm = "kd_tree"
+)
+tictoc::toc()
+xwalk_2005 <- data.table(
+  ncid = nc_2005$ncid,
+  fsid2005 = flood_data$fsid[nearest_idx$nn.index]
+)
+saveRDS(xwalk_2005, file = "D:/Mike_Data/PolData/rda_files/xwalk_2005.RDS")
+write.csv(xwalk_2005, 'D:/Mike_Data/PolData/csv_files/xwalk_2005.csv')
+write_dta(xwalk_2005, 'D:/Mike_Data/PolData/dta_files/xwalk_2005.dta')
+
+# 2006
+
+parquetize::table_to_parquet(
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2006.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2006/")
+)
+nc_2006 <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2006")
+)
+tictoc::tic("Calculating nearest index")
+nearest_idx = FNN:::get.knnx(
+  data = flood_data[, c("lat", "v2")],
+  query = nc_2006[, c("y", "x")],
+  k = 1, algorithm = "kd_tree"
+)
+tictoc::toc()
+xwalk_2006 <- data.table(
+  ncid = nc_2006$ncid,
+  fsid2006 = flood_data$fsid[nearest_idx$nn.index]
+)
+
+saveRDS(xwalk_2006, file = "D:/Mike_Data/PolData/rda_files/xwalk_2006.RDS")
+write.csv(xwalk_2006, 'D:/Mike_Data/PolData/csv_files/xwalk_2006.csv')
+write_dta(xwalk_2006, 'D:/Mike_Data/PolData/dta_files/xwalk_2006.dta')
+
+# 2007
+
+parquetize::table_to_parquet(
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2007.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2007/")
+)
+nc_2007 <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2007")
+)
+tictoc::tic("Calculating nearest index")
+nearest_idx = FNN:::get.knnx(
+  data = flood_data[, c("lat", "v2")],
+  query = nc_2007[, c("y", "x")],
+  k = 1, algorithm = "kd_tree"
+)
+tictoc::toc()
+xwalk_2007 <- data.table(
+  ncid = nc_2007$ncid,
+  fsid2007 = flood_data$fsid[nearest_idx$nn.index]
+)
+
+saveRDS(xwalk_2007, file = "D:/Mike_Data/PolData/rda_files/xwalk_2007.RDS")
+write.csv(xwalk_2007, 'D:/Mike_Data/PolData/csv_files/xwalk_2007.csv')
+write_dta(xwalk_2007, 'D:/Mike_Data/PolData/dta_files/xwalk_2007.dta')
+
+
+# 2008
+
+parquetize::table_to_parquet(
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2008.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2008/")
+)
+nc_2008 <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2008")
+)
+tictoc::tic("Calculating nearest index")
+nearest_idx = FNN:::get.knnx(
+  data = flood_data[, c("lat", "v2")],
+  query = nc_2008[, c("y", "x")],
+  k = 1, algorithm = "kd_tree"
+)
+tictoc::toc()
+xwalk_2008 <- data.table(
+  ncid = nc_2008$ncid,
+  fsid2008 = flood_data$fsid[nearest_idx$nn.index]
+)
+
+saveRDS(xwalk_2008, file = "D:/Mike_Data/PolData/rda_files/xwalk_2008.RDS")
+write.csv(xwalk_2008, 'D:/Mike_Data/PolData/csv_files/xwalk_2008.csv')
+write_dta(xwalk_2008, 'D:/Mike_Data/PolData/dta_files/xwalk_2008.dta')
+
+# 2009
+
+parquetize::table_to_parquet(
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2009.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2009/")
+)
+nc_2009 <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2009")
+)
+tictoc::tic("Calculating nearest index")
+nearest_idx = FNN:::get.knnx(
+  data = flood_data[, c("lat", "v2")],
+  query = nc_2009[, c("y", "x")],
+  k = 1, algorithm = "kd_tree"
+)
+tictoc::toc()
+xwalk_2009 <- data.table(
+  ncid = nc_2008$ncid,
+  fsid2009 = flood_data$fsid[nearest_idx$nn.index]
+)
+
+saveRDS(xwalk_2009, file = "D:/Mike_Data/PolData/rda_files/xwalk_2009.RDS")
+write.csv(xwalk_2009, 'D:/Mike_Data/PolData/csv_files/xwalk_2009.csv')
+write_dta(xwalk_2009, 'D:/Mike_Data/PolData/dta_files/xwalk_2009.dta')
+
+
+
+library(parquetize)
+library(data.table)
+library(tictoc)
+library(FNN)
+
+# Set the path to your files
+base_path <- "D:/Mike_Data/PolData"
+
+# Loop over the years
+for (year in 2005:2009) {
+  year_str <- as.character(year)
+
+  # Define the file paths
+  dta_file <- file.path(base_path, "dta_files", paste0("nc_unique_", year_str, ".dta"))
+  parquet_path <- file.path(base_path, "Test1", paste0("nc_voters", year_str))
+  rds_file <- file.path(base_path, "rda_files", paste0("xwalk_", year_str, ".RDS"))
+  csv_file <- file.path(base_path, "csv_files", paste0("xwalk_", year_str, ".csv"))
+  dta_output <- file.path(base_path, "dta_files", paste0("xwalk_", year_str, ".dta"))
+
+  # Convert table to Parquet
+  table_to_parquet(path_to_file = dta_file, path_to_parquet = parquet_path)
+
+  # Read Parquet file
+  nc_data <- read_parquet(parquet_path)
+
+  # Calculate nearest index
+  tictoc::tic("Calculating nearest index")
+  nearest_idx <- FNN:::get.knnx(
+    data = flood_data[, c("lat", "v2")],
+    query = nc_data[, c("y", "x")],
+    k = 1, algorithm = "kd_tree"
+  )
+  tictoc::toc()
+
+  # Create data.table
+  xwalk_data <- data.table(
+    ncid = nc_data$ncid,
+    fsid = flood_data$fsid[nearest_idx$nn.index]
+  )
+
+  # Save data as RDS
+  saveRDS(xwalk_data, file = rds_file)
+
+  # Save data as CSV
+  write.csv(xwalk_data, csv_file)
+
+  # Save data as DTA
+  write_dta(xwalk_data, dta_output)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
