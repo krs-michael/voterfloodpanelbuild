@@ -11,11 +11,6 @@ library(FNN)
 library(tictoc)
 library(parquetize)
 library(haven)
-
-# Load Necessary Packages ------------------------------------------------------
-
-library(tidyverse)
-library(haven)
 library(data.table)
 
 ## Setting the Working Environment ---------------------------------------------
@@ -23,7 +18,7 @@ library(data.table)
 getwd()
 setwd("D:/Mike_Data/PolData/")
 
-# Making Stata data files into r dataframes ------------------------------------
+# Making Stata data files into RDS files ---------------------------------------
 
 setwd("D:/Mike_Data/PolData/dta_files")
 data_files <- list.files()
@@ -40,7 +35,51 @@ rm(data_files, from, i, nc_voters2005.dta, nc_voters2006.dta, nc_voters2007.dta,
    nc_voters2014.dta, nc_voters2015.dta, nc_voters2016.dta, nc_voters2017.dta, nc_voters2018.dta,
    nc_voters2019.dta, nc_voters2020.dta, nc_voters2021.dta)
 
-# Remove duplicate ncid's from 2006, 2008 - 2021 -------------------------------
+# Remove duplicate ncid's from 2005 - 2021 -------------------------------------
+
+# Set the path to your files
+base_path <- "D:/Mike_Data/PolData"
+
+# Loop over the years
+for (year in 2005:2021) {
+  year_str <- as.character(year)
+
+  # Define the file paths
+  rds_file_old <- file.path(base_path, "rda_files", paste0("nc_voters", year_str, ".RDS"))
+  rda_file_new <- file.path(base_path, "rda_files", paste0("nc_unique_", year_str, ".RDS"))
+  csv_new <- file.path(base_path, "csv_files", paste0("nc_voters", year_str, ".csv"))
+  csv_unique_new <- file.path(base_path, "csv_files", paste0("nc_unique_", year_str, ".csv"))
+  dta_new <-  file.path(base_path, "dta_files", paste0("nc_unique_", year_str, ".dta"))
+
+  # Read RDS file with ncid duplicates
+  nc_xxxx <- readRDS(rds_file_old)
+
+  # Removing duplicate ncid's
+  nc_unique <- nc_xxxx %>% group_by(ncid) %>% filter(n()==1)
+  nc_dup <- nc_xxxx %>% group_by(ncid) %>% filter(n()>1)
+  nc_mostrecent <- nc_dup %>%
+    group_by(ncid) %>%
+    filter(registr_dt == max(registr_dt))
+  nc_mostrecent2 <- nc_mostrecent %>%
+    group_by(ncid) %>%
+    filter(voter_reg_num == max(voter_reg_num))
+  nc_xxxx_unique <- rbind(nc_unique, nc_mostrecent2)
+
+  # Check that it has same number of unique ncid's
+    # length(unique(nc_xxxx$ncid))
+    # length(unique(nc_xxxx_unique$ncid))
+
+  # Save data as RDS
+  saveRDS(nc_xxxx_unique, file = rds_file_new)
+
+  # Save data as CSV
+  write.csv(nc_xxxx, csv_new)
+  write.csv(nc_xxxx_unique, csv_unique_new)
+
+  # Save data as DTA
+  write_dta(nc_xxxx_unique, dta_new)
+
+}
 
 setwd("D:/Mike_Data/PolData/rda_files")
 
@@ -386,84 +425,6 @@ rm(nc_unique, nc_dup, nc_mostrecent, nc_mostrecent2, nc_xxxx, nc_xxxx_unique)
 
 # Matching Property Data to Nearest Point for 2006 - 2021 ----------------------
 
-library(data.table)
-library(tidyverse)
-library(sf)
-library(s2)
-library(here)
-library(vroom)
-library(arrow)
-library(FNN)
-library(tictoc)
-library(parquetize)
-
-# 2005 test
-
-getwd()
-setwd("D:/Mike_Data/PolData/")
-
-options(max.print = 50)
-
-parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2005.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2005_test/")
-)
-nc_2005_test <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2005_test")
-)
-flood_data <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/FS_NC_Flood")
-)
-tictoc::tic("Calculating nearest index")
-nearest_idx = FNN:::get.knnx(
-  data = flood_data[, c("lat", "v2")],
-  query = nc_2005_test[, c("y", "x")],
-  k = 1, algorithm = "kd_tree"
-)
-tictoc::toc()
-xwalk_2005_test <- data.table(
-  ncid = nc_2005_test$ncid,
-  fsid2005 = flood_data$fsid[nearest_idx$nn.index]
-)
-write_dta(xwalk_2005_test, 'D:/Mike_Data/PolData/dta_files/xwalk_2005_test.dta')
-
-# 2019 test
-
-parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2019.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2019_test/")
-)
-nc_2019_test <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2019_test")
-)
-
-df[!is.na(df$B), ]
-dat %>% drop_na(B)
-
-nc_2019_test2 <- nc_2019_test %>% drop_na(x)
-
-tictoc::tic("Calculating nearest index")
-nearest_idx = FNN:::get.knnx(
-  data = flood_data[, c("lat", "v2")],
-  query = nc_2019_test2[, c("y", "x")],
-  k = 1, algorithm = "kd_tree"
-)
-tictoc::toc()
-xwalk_2019_test <- data.table(
-  ncid = nc_2019_test2$ncid,
-  fsid2019 = flood_data$fsid[nearest_idx$nn.index]
-)
-
-write_dta(xwalk_2019_test, 'D:/Mike_Data/PolData/dta_files/xwalk_2019_test.dta')
-
-saveRDS(nc_2019_test2, file = "D:/Mike_Data/PolData/rda_files/nc_unique_2019.RDS")
-
-
-library(parquetize)
-library(data.table)
-library(tictoc)
-library(FNN)
-
 flood_data <- read_parquet(
   here("D:/Mike_Data/PolData/Test1/FS_NC_Flood")
 )
@@ -472,7 +433,7 @@ flood_data <- read_parquet(
 base_path <- "D:/Mike_Data/PolData"
 
 # Loop over the years
-for (year in 2020:2021) {
+for (year in 2005:2021) {
   year_str <- as.character(year)
 
   # Define the file paths
@@ -513,26 +474,27 @@ for (year in 2020:2021) {
   write_dta(xwalk_data, dta_output)
 }
 
-# Loop to add in a year variable for each dataset ------------------------------
+# Loop to add in a year variable for each voters dataset ---------------------
 
 # Set the path to your files
 base_path <- "D:/Mike_Data/PolData"
 
 # Loop over the years
-for (year in 2020:2021) {
+for (year in 2005:2021) {
   year_str <- as.character(year)
 
   # Define the file paths
-  rds_file <- file.path(base_path, "rda_files", paste0("xwalk_", year_str, ".RDS"))
+  rds_file_new <- file.path(base_path, "rda_files", paste0("nc_", year_str, ".RDS"))
+  rds_file_old <- file.path(base_path, "rda_files", paste0("nc_unique_", year_str, ".RDS"))
 
   # Read in RDS data
-  nc_data_prelim <- readRDS(rds_file)
+  nc_data_prelim <- readRDS(rds_file_old)
 
   # Gen a year variable
   nc_data <- nc_data_prelim %>% mutate(year = year_str)
 
   # Save data as RDS
-  saveRDS(xwalk_data, file = rds_file)
+  saveRDS(nc_data, file = rds_file_new)
 }
 
 
@@ -546,99 +508,6 @@ for (year in 2020:2021) {
 
 
 
-
-# Explore differences across years ---------------------------------------------
-
-# Similar years 2008, 2015, 2016, 2017, 2019, 2020, 2021
-# Dissimilar years 2005, 2006, 2007, 2009, 2010, 2011, 2012, 2013, 2014, 2018
-
-setwd("D:/Mike_Data/PolData/rda_files")
-data_files <- list.files()
-data_files
-
-from <- 2005
-for (i in 1:length(data_files)) {
-  assign(data_files[i], readRDS(paste0(data_files[i])))
-  nc_unique <- data_files[i] %>% group_by(ncid) %>% filter(n()==1)
-  nc_dup <- data_files[i] %>% group_by(ncid) %>% filter(n()>1)
-  nc_mostrecent <- nc_dup %>%
-    group_by(ncid) %>%
-    filter(registr_dt == max(registr_dt))
-  nc_mostrecent2 <- nc_mostrecent %>%
-    group_by(ncid) %>%
-    filter(voter_reg_num == max(voter_reg_num))
-  nc_unique_bind <- rbind(nc_unique, nc_mostrecent2)
-
-}
-
-# 2014
-
-nc_2014 <- read_dta('nc_voters2014.dta')
-length(unique(nc_2014$ncid))
-
-nc_unique <- nc_2014 %>% group_by(ncid) %>% filter(n()==1)
-nc_dup <- nc_2014 %>% group_by(ncid) %>% filter(n()>1)
-
-nc_mostrecent <- nc_dup %>%
-  group_by(ncid) %>%
-  filter(registr_dt == max(registr_dt))
-nc_mostrecent2 <- nc_mostrecent %>%
-  group_by(ncid) %>%
-  filter(voter_reg_num == max(voter_reg_num))
-
-nc_2014_unique <- rbind(nc_unique, nc_mostrecent2)
-length(unique(nc_2014_unique$ncid))
-
-rm(nc_unique)
-rm(nc_dup)
-rm(nc_mostrecent)
-rm(nc_mostrecent2)
-
-# 2017
-
-nc_2017 <- read_dta('nc_voters2017.dta')
-length(unique(nc_2017$ncid))
-
-nc_unique <- nc_2017 %>% group_by(ncid) %>% filter(n()==1)
-nc_dup <- nc_2017 %>% group_by(ncid) %>% filter(n()>1)
-
-nc_mostrecent <- nc_dup %>%
-  group_by(ncid) %>%
-  filter(registr_dt == max(registr_dt))
-nc_mostrecent2 <- nc_mostrecent %>%
-  group_by(ncid) %>%
-  filter(voter_reg_num == max(voter_reg_num))
-
-nc_2017_unique <- rbind(nc_unique, nc_mostrecent2)
-length(unique(nc_2017_unique$ncid))
-
-rm(nc_unique)
-rm(nc_dup)
-rm(nc_mostrecent)
-rm(nc_mostrecent2)
-
-# 2009
-
-nc_2009 <- read_dta('nc_voters2009.dta')
-length(unique(nc_2009$ncid))
-
-nc_unique <- nc_2009 %>% group_by(ncid) %>% filter(n()==1)
-nc_dup <- nc_2009 %>% group_by(ncid) %>% filter(n()>1)
-
-nc_mostrecent <- nc_dup %>%
-  group_by(ncid) %>%
-  filter(registr_dt == max(registr_dt))
-nc_mostrecent2 <- nc_mostrecent %>%
-  group_by(ncid) %>%
-  filter(voter_reg_num == max(voter_reg_num))
-
-nc_2009_unique <- rbind(nc_unique, nc_mostrecent2)
-length(unique(nc_2009_unique$ncid))
-
-rm(nc_unique)
-rm(nc_dup)
-rm(nc_mostrecent)
-rm(nc_mostrecent2)
 
 
 # Test Code --------------------------------------------------------------------
