@@ -397,7 +397,7 @@ library(FNN)
 library(tictoc)
 library(parquetize)
 
-# 2005
+# 2005 test
 
 getwd()
 setwd("D:/Mike_Data/PolData/")
@@ -406,10 +406,10 @@ options(max.print = 50)
 
 parquetize::table_to_parquet(
   path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2005.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2005/")
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2005_test/")
 )
-nc_2005 <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2005")
+nc_2005_test <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2005_test")
 )
 flood_data <- read_parquet(
   here("D:/Mike_Data/PolData/Test1/FS_NC_Flood")
@@ -417,119 +417,46 @@ flood_data <- read_parquet(
 tictoc::tic("Calculating nearest index")
 nearest_idx = FNN:::get.knnx(
   data = flood_data[, c("lat", "v2")],
-  query = nc_2005[, c("y", "x")],
+  query = nc_2005_test[, c("y", "x")],
   k = 1, algorithm = "kd_tree"
 )
 tictoc::toc()
-xwalk_2005 <- data.table(
-  ncid = nc_2005$ncid,
+xwalk_2005_test <- data.table(
+  ncid = nc_2005_test$ncid,
   fsid2005 = flood_data$fsid[nearest_idx$nn.index]
 )
-saveRDS(xwalk_2005, file = "D:/Mike_Data/PolData/rda_files/xwalk_2005.RDS")
-write.csv(xwalk_2005, 'D:/Mike_Data/PolData/csv_files/xwalk_2005.csv')
-write_dta(xwalk_2005, 'D:/Mike_Data/PolData/dta_files/xwalk_2005.dta')
+write_dta(xwalk_2005_test, 'D:/Mike_Data/PolData/dta_files/xwalk_2005_test.dta')
 
-# 2006
+# 2019 test
 
 parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2006.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2006/")
+  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2019.dta"),
+  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2019_test/")
 )
-nc_2006 <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2006")
+nc_2019_test <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/nc_voters2019_test")
 )
+
+df[!is.na(df$B), ]
+dat %>% drop_na(B)
+
+nc_2019_test2 <- nc_2019_test %>% drop_na(x)
+
 tictoc::tic("Calculating nearest index")
 nearest_idx = FNN:::get.knnx(
   data = flood_data[, c("lat", "v2")],
-  query = nc_2006[, c("y", "x")],
+  query = nc_2019_test2[, c("y", "x")],
   k = 1, algorithm = "kd_tree"
 )
 tictoc::toc()
-xwalk_2006 <- data.table(
-  ncid = nc_2006$ncid,
-  fsid2006 = flood_data$fsid[nearest_idx$nn.index]
+xwalk_2019_test <- data.table(
+  ncid = nc_2019_test2$ncid,
+  fsid2019 = flood_data$fsid[nearest_idx$nn.index]
 )
 
-saveRDS(xwalk_2006, file = "D:/Mike_Data/PolData/rda_files/xwalk_2006.RDS")
-write.csv(xwalk_2006, 'D:/Mike_Data/PolData/csv_files/xwalk_2006.csv')
-write_dta(xwalk_2006, 'D:/Mike_Data/PolData/dta_files/xwalk_2006.dta')
+write_dta(xwalk_2019_test, 'D:/Mike_Data/PolData/dta_files/xwalk_2019_test.dta')
 
-# 2007
-
-parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2007.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2007/")
-)
-nc_2007 <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2007")
-)
-tictoc::tic("Calculating nearest index")
-nearest_idx = FNN:::get.knnx(
-  data = flood_data[, c("lat", "v2")],
-  query = nc_2007[, c("y", "x")],
-  k = 1, algorithm = "kd_tree"
-)
-tictoc::toc()
-xwalk_2007 <- data.table(
-  ncid = nc_2007$ncid,
-  fsid2007 = flood_data$fsid[nearest_idx$nn.index]
-)
-
-saveRDS(xwalk_2007, file = "D:/Mike_Data/PolData/rda_files/xwalk_2007.RDS")
-write.csv(xwalk_2007, 'D:/Mike_Data/PolData/csv_files/xwalk_2007.csv')
-write_dta(xwalk_2007, 'D:/Mike_Data/PolData/dta_files/xwalk_2007.dta')
-
-
-# 2008
-
-parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2008.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2008/")
-)
-nc_2008 <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2008")
-)
-tictoc::tic("Calculating nearest index")
-nearest_idx = FNN:::get.knnx(
-  data = flood_data[, c("lat", "v2")],
-  query = nc_2008[, c("y", "x")],
-  k = 1, algorithm = "kd_tree"
-)
-tictoc::toc()
-xwalk_2008 <- data.table(
-  ncid = nc_2008$ncid,
-  fsid2008 = flood_data$fsid[nearest_idx$nn.index]
-)
-
-saveRDS(xwalk_2008, file = "D:/Mike_Data/PolData/rda_files/xwalk_2008.RDS")
-write.csv(xwalk_2008, 'D:/Mike_Data/PolData/csv_files/xwalk_2008.csv')
-write_dta(xwalk_2008, 'D:/Mike_Data/PolData/dta_files/xwalk_2008.dta')
-
-# 2009
-
-parquetize::table_to_parquet(
-  path_to_file = here("D:/Mike_Data/PolData/dta_files/nc_unique_2009.dta"),
-  path_to_parquet = here("D:/Mike_Data/PolData/Test1/nc_voters2009/")
-)
-nc_2009 <- read_parquet(
-  here("D:/Mike_Data/PolData/Test1/nc_voters2009")
-)
-tictoc::tic("Calculating nearest index")
-nearest_idx = FNN:::get.knnx(
-  data = flood_data[, c("lat", "v2")],
-  query = nc_2009[, c("y", "x")],
-  k = 1, algorithm = "kd_tree"
-)
-tictoc::toc()
-xwalk_2009 <- data.table(
-  ncid = nc_2008$ncid,
-  fsid2009 = flood_data$fsid[nearest_idx$nn.index]
-)
-
-saveRDS(xwalk_2009, file = "D:/Mike_Data/PolData/rda_files/xwalk_2009.RDS")
-write.csv(xwalk_2009, 'D:/Mike_Data/PolData/csv_files/xwalk_2009.csv')
-write_dta(xwalk_2009, 'D:/Mike_Data/PolData/dta_files/xwalk_2009.dta')
-
+saveRDS(nc_2019_test2, file = "D:/Mike_Data/PolData/rda_files/nc_unique_2019.RDS")
 
 
 library(parquetize)
@@ -537,11 +464,15 @@ library(data.table)
 library(tictoc)
 library(FNN)
 
+flood_data <- read_parquet(
+  here("D:/Mike_Data/PolData/Test1/FS_NC_Flood")
+)
+
 # Set the path to your files
 base_path <- "D:/Mike_Data/PolData"
 
 # Loop over the years
-for (year in 2005:2009) {
+for (year in 2020:2021) {
   year_str <- as.character(year)
 
   # Define the file paths
@@ -582,16 +513,27 @@ for (year in 2005:2009) {
   write_dta(xwalk_data, dta_output)
 }
 
+# Loop to add in a year variable for each dataset ------------------------------
 
+# Set the path to your files
+base_path <- "D:/Mike_Data/PolData"
 
+# Loop over the years
+for (year in 2020:2021) {
+  year_str <- as.character(year)
 
+  # Define the file paths
+  rds_file <- file.path(base_path, "rda_files", paste0("xwalk_", year_str, ".RDS"))
 
+  # Read in RDS data
+  nc_data_prelim <- readRDS(rds_file)
 
+  # Gen a year variable
+  nc_data <- nc_data_prelim %>% mutate(year = year_str)
 
-
-
-
-
+  # Save data as RDS
+  saveRDS(xwalk_data, file = rds_file)
+}
 
 
 
