@@ -78,9 +78,7 @@ for (year in 2005:2021) {
 
   # Save data as DTA
   write_dta(nc_xxxx_unique, dta_new)
-
 }
-
 
 # Merging in missing ncid's for 2005 and 2007 ----------------------------------
 
@@ -160,24 +158,217 @@ for (year in 2005:2021) {
   saveRDS(nc_data, file = rds_file_new)
 }
 
-# Merge in voters data from each year ------------------------------------------
+# Merge in voters data from each year and FirstStreet data ---------------------
+
+xwalk <- read_dta("D:/Mike_Data/PolData/dta_files/xwalk_all_years_long.dta")
+nc_flood <- read_dta("D:/Mike_Data/PolData/FS_NC.dta")
+
+# Set the path to your files
+base_path <- "D:/Mike_Data/PolData"
+
+# Loop over the years
+for (year in 2005:2021) {
+  year_str <- as.character(year)
+
+  # Define the file paths
+  rds_file_old <- file.path(base_path, "rda_files", paste0("nc_", year_str, ".RDS"))
+  xwalk_new <- file.path(base_path, "rda_files", paste0("nc_xwalk_", year_str, ".RDS"))
+
+  # Read RDS file
+  nc_all <- readRDS(rds_file_old)
+
+  # Select and merge columns of interest
+  xwalk_xxxx <- xwalk[xwalk$year == year_str,]
+  nc_sel <- nc_all %>% select(c('ncid','voter_status_desc','voter_status_reason_desc',
+                                  'race_code','race_desc','ethnic_code','ethnic_desc',
+                                  'party_cd','party_desc','sex_code','sex','age','birth_place',
+                                  'registr_dt','year'))
+  finished_prelim <- merge(xwalk_xxxx, nc_sel, by.x=c("ncid","year"), by.y=c("ncid","year"), all.x=TRUE)
+  finished_product <- merge(finished_prelim, nc_flood, by.x=c("fsid"), by.y=c("fsid"), all.x=TRUE)
+
+  # Adding in a blank dummy for flood event, flood event name, and inundation
+  finished_product2 <- finished_product %>% mutate(flood_event = 0)
+  finished_product3 <- finished_product2 %>% mutate(flood_event_desc = "")
+  finished_product4 <- finished_product3 %>% mutate(inundation = 0)
+
+  # Saving merged xwalk file
+  saveRDS(finished_product4, file = xwalk_new)
+
+}
+
+# Creating flooding event indicators -------------------------------------------
+
+# Florence (2018) - 1004
+  nc_2018 <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_2018.RDS")
+
+  nc_2018$hist1_depth[is.na(nc_2018$hist1_depth)] <- 0
+  nc_2018$hist1_depth[nc_2018$hist1_depth == 'NA'] <- 0
+  nc_2018$flood_event[nc_2018$hist1_id == 1004 & nc_2018$hist1_depth > 0] <- 1
+
+  nc_2018$hist2_depth[is.na(nc_2018$hist2_depth)] <- 0
+  nc_2018$hist2_depth[nc_2018$hist2_depth == 'NA'] <- 0
+  nc_2018$flood_event[nc_2018$hist2_id == 1004 & nc_2018$hist2_depth > 0] <- 1
+
+  nc_2018$inundation[nc_2018$flood_event == 1 & nc_2018$hist1_id == 1004] <- nc_2018$hist1_depth[nc_2018$flood_event == 1 & nc_2018$hist1_id == 1004]
+  nc_2018$inundation[nc_2018$flood_event == 1 & nc_2018$hist2_id == 1004] <- nc_2018$hist2_depth[nc_2018$flood_event == 1 & nc_2018$hist2_id == 1004]
+
+  nc_2018$flood_event_desc[nc_2018$flood_event == 1] <- "Florence"
+
+  saveRDS(nc_2018, "D:/Mike_Data/PolData/rda_files/nc_xwalk_2018.RDS")
+
+# Irene (2011) - 1009
+  nc_xxxx <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_2011.RDS")
+
+  nc_xxxx$hist1_depth[is.na(nc_xxxx$hist1_depth)] <- 0
+  nc_xxxx$hist1_depth[nc_xxxx$hist1_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist1_id == 1009 & nc_xxxx$hist1_depth > 0] <- 1
+
+  nc_xxxx$hist2_depth[is.na(nc_xxxx$hist2_depth)] <- 0
+  nc_xxxx$hist2_depth[nc_xxxx$hist2_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist2_id == 1009 & nc_xxxx$hist2_depth > 0] <- 1
+
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1009] <- nc_xxxx$hist1_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1009]
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1009] <- nc_xxxx$hist2_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1009]
+
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1] <- "Irene"
+
+  saveRDS(nc_xxxx, "D:/Mike_Data/PolData/rda_files/nc_xwalk_2011.RDS")
+
+# Irma (2017) - 1010
+  nc_xxxx <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_2017.RDS")
+
+  nc_xxxx$hist1_depth[is.na(nc_xxxx$hist1_depth)] <- 0
+  nc_xxxx$hist1_depth[nc_xxxx$hist1_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist1_id == 1010 & nc_xxxx$hist1_depth > 0] <- 1
+
+  nc_xxxx$hist2_depth[is.na(nc_xxxx$hist2_depth)] <- 0
+  nc_xxxx$hist2_depth[nc_xxxx$hist2_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist2_id == 1010 & nc_xxxx$hist2_depth > 0] <- 1
+
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1010] <- nc_xxxx$hist1_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1010]
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1010] <- nc_xxxx$hist2_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1010]
+
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1] <- "Irma"
+
+  saveRDS(nc_xxxx, "D:/Mike_Data/PolData/rda_files/nc_xwalk_2017.RDS")
+
+# Nor'easter storm surge (2009) - 1027
+  nc_xxxx <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_2009.RDS")
+
+  nc_xxxx$hist1_depth[is.na(nc_xxxx$hist1_depth)] <- 0
+  nc_xxxx$hist1_depth[nc_xxxx$hist1_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist1_id == 1027 & nc_xxxx$hist1_depth > 0] <- 1
+
+  nc_xxxx$hist2_depth[is.na(nc_xxxx$hist2_depth)] <- 0
+  nc_xxxx$hist2_depth[nc_xxxx$hist2_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist2_id == 1027 & nc_xxxx$hist2_depth > 0] <- 1
+
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1027] <- nc_xxxx$hist1_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1027]
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1027] <- nc_xxxx$hist2_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1027]
+
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1] <- "Noreaster"
+
+  saveRDS(nc_xxxx, "D:/Mike_Data/PolData/rda_files/nc_xwalk_2009.RDS")
 
 
+# Matthew (2016) - 1017 & Rocky Mount river flood (2016) - 50
+  nc_xxxx <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_2016.RDS")
+
+  nc_xxxx$hist1_depth[is.na(nc_xxxx$hist1_depth)] <- 0
+  nc_xxxx$hist1_depth[nc_xxxx$hist1_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist1_id == 1017 & nc_xxxx$hist1_depth > 0] <- 1
+
+  nc_xxxx$hist2_depth[is.na(nc_xxxx$hist2_depth)] <- 0
+  nc_xxxx$hist2_depth[nc_xxxx$hist2_depth == 'NA'] <- 0
+  nc_xxxx$flood_event[nc_xxxx$hist2_id == 1017 & nc_xxxx$hist2_depth > 0] <- 1
+
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1017] <- nc_xxxx$hist1_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1017]
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1017] <- nc_xxxx$hist2_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1017]
+
+  nc_xxxx$flood_event[nc_xxxx$hist1_id == 50 & nc_xxxx$hist1_depth > 0] <- 1
+
+  nc_xxxx$flood_event[nc_xxxx$hist2_id == 50 & nc_xxxx$hist2_depth > 0] <- 1
+
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 50] <- nc_xxxx$hist1_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 50]
+  nc_xxxx$inundation[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 50] <- nc_xxxx$hist2_depth[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 50]
+
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 1017] <- "Matthew"
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 1017] <- "Matthew"
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1 & nc_xxxx$hist1_id == 50] <- "Rocky Mount"
+  nc_xxxx$flood_event_desc[nc_xxxx$flood_event == 1 & nc_xxxx$hist2_id == 50] <- "Rocky Mount"
+
+  saveRDS(nc_xxxx, "D:/Mike_Data/PolData/rda_files/nc_xwalk_2016.RDS")
+
+# Dropping unneeded variables --------------------------------------------------
+
+# Set the path to your files
+base_path <- "D:/Mike_Data/PolData"
+
+# Loop over the years
+for (year in 2005:2021) {
+  year_str <- as.character(year)
+
+  # Define the file paths
+  rds_file_new <- file.path(base_path, "rda_files", paste0("nc_xwalk_v1_", year_str, ".RDS"))
+  rds_file_old <- file.path(base_path, "rda_files", paste0("nc_xwalk_", year_str, ".RDS"))
+
+  # Read in RDS data
+  nc_data_prelim <- readRDS(rds_file_old)
+
+  # Dropping unneeded columns
+  nc_data = select(nc_data_prelim, -hist1_id, -hist1_event, -hist1_year, -hist1_depth,
+                   -hist2_id, -hist2_event, -hist2_year, -hist2_depth, -adapt_id, -adapt_type)
+
+  # Save data as RDS
+  saveRDS(nc_data, file = rds_file_new)
+}
+
+  nc_test = select(nc_2018, -hist1_id, -hist1_event, -hist1_year, -hist1_depth,
+                   -hist2_id, -hist2_event, -hist2_year, -hist2_depth, -adapt_id, -adapt_type)
 
 
+# Appending datasets into one
+
+nc_2005_base <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_v1_2005.RDS")
+
+# Set the path to your files
+  base_path <- "D:/Mike_Data/PolData"
+
+# Loop over the years
+  for (year in 2006:2021) {
+    year_str <- as.character(year)
+
+# Define the file paths
+    rds_file_old <- file.path(base_path, "rda_files", paste0("nc_xwalk_v1_", year_str, ".RDS"))
+
+# Read in RDS data
+    nc_data_prelim <- readRDS(rds_file_old)
+
+# Append to main dataset
+    nc_2005_base <- rbind(nc_2005_base,nc_data_prelim)
+  }
+
+saveRDS(nc_2005_base, "D:/Mike_Data/PolData/rda_files/nc_xwalk_v1_all.RDS")
 
 
+# Constructing a variable for if someone moved ---------------------------------
 
-# Merge in FirstStreet data and create flooding event indicators ---------------
+nc_2005_base <- nc_2005_base %>%
+  arrange(ncid, year)
 
+saveRDS(nc_2005_base, "D:/Mike_Data/PolData/rda_files/nc_xwalk_v2_all.RDS")
 
+nc_2005_base <- nc_2005_base %>% group_by(ncid) %>% mutate(moved_indicator = ifelse(fsid != lag(fsid), 1, 0))
 
+nc_2005_base$moved_indicator[is.na(nc_2005_base$moved_indicator)] <- 0
 
+nc_2005_base$fsid[is.na(nc_2005_base$fsid)] <- 0
+nc_2005_base <- nc_2005_base %>% group_by(ncid) %>% mutate(moved_indicator2 = ifelse(fsid != lag(fsid), 1, 0))
+nc_2005_base$moved_indicator2[is.na(nc_2005_base$moved_indicator2)] <- 0
 
+# Taking a random sample for easier use when experimenting with code -----------
 
-
-
-
+nc_base <- readRDS("D:/Mike_Data/PolData/rda_files/nc_xwalk_v2_all.RDS")
 
 
 
